@@ -11,6 +11,7 @@ import rfid
 
 DEBUG = False
 
+#继承了 gr.top_block 这个类，
 class reader_top_block(gr.top_block):
 
   # Configure usrp source
@@ -120,6 +121,7 @@ class reader_top_block(gr.top_block):
 if __name__ == '__main__':
 
   main_block = reader_top_block()
+  # start() 会调用 run() , main block 本身没有，估计调用父类：gr.top_block 的run()
   main_block.start()
 
   while(1):
