@@ -29,7 +29,8 @@
 #include <fstream>
 namespace gr {
 namespace rfid {
-
+  // tag_decoder_impl.h 中定义了 class  tag_decoder_impl, 它继承了 class tag_decoder
+  // tag_decoder_impl.h 中定义了
   class tag_decoder_impl : public tag_decoder
   {
     private:
@@ -44,9 +45,10 @@ namespace rfid {
       std::vector<float> tag_detection_EPC(std::vector<gr_complex> &EPC_samples_complex, int index);
       std::vector<float> tag_detection_RN16(std::vector<gr_complex> &RN16_samples_complex);      
       int tag_sync(const gr_complex * in, int size);
-       int check_crc(char * bits, int num_bits);
+      int check_crc(char * bits, int num_bits);
 
     public:
+      // 构造函数。
       tag_decoder_impl(int sample_rate, std::vector<int> output_sizes);
       ~tag_decoder_impl();
 

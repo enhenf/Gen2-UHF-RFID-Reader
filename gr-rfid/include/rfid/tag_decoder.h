@@ -23,6 +23,7 @@
 
 #include <rfid/api.h>
 #include <gnuradio/block.h>
+// 这里 定义了 tag_decoder 这个类
 
 namespace gr {
   namespace rfid {
@@ -34,7 +35,8 @@ namespace gr {
      */
     class RFID_API tag_decoder : virtual public gr::block
     {
-     public:
+      public:
+      // tag_decoder 定义了一个指向本类的只能指针别名 sptr;
       typedef boost::shared_ptr<tag_decoder> sptr;
 
       /*!
@@ -45,6 +47,16 @@ namespace gr {
        * class. rfid::tag_decoder::make is the public interface for
        * creating new instances.
        */
+      // 没有使用 tag_decoder 的默认构造函数，而是把默认构造函数作为私有方法
+      // 通过一个公开的 make 接口来创造新的实例。
+      // 但是 tag_decoder 仍然不是直接使用的类，它有一个继承类 tag_decoder_impl 声明再 tag_decoder_impl.h 之中。
+      // tag_decoder 似乎只是声明一个接口。
+
+      // 但是再 reader.py 中 self.tag_decoder    = rfid.tag_decoder(int(self.adc_rate/self.decim))
+      // 这句话不是很明白，因为 tag_decoder 的默认构造函数时隐藏的，所以应该是能用 make 生成一个实例而已。
+      // 猜测可能时 swig 中把 rfid.tag_decoder(int(self.adc_rate/self.decim)) 改成调用 make(int sample_rate)
+      // static sptr make(int sample_rate); 的实现在 tag_decoder_impl.cc 之中
+      // 返回值确实时 sptr 类型，只不过时指向了 tag_decoder 的子类 tag_decoder_impl
       static sptr make(int sample_rate);
     };
 

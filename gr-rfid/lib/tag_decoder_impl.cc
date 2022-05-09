@@ -32,6 +32,14 @@
 namespace gr {
   namespace rfid {
 
+    // 从这里可以看出来，make 返回的时 tag_decoder 的子类 tag_decoder_impl 的实例。
+    // output_sizes 的 第二个参数 gr_complex 因为是 gnuradio 表示信号的复数形式？
+
+    // 关于 gr_complex 是 gnuradio 的定义 typedef std::complex< float > 	gr_complex
+    // 源于 标准库 namespace 中的模板定义，这里用的是 float 填充模板。
+    // 有如下用法 : std::complex<double> z1 {2, 5}; // 2 + 5i
+
+    // 显然 output_size 传给 tag_decoder_impl 复数需要占用的空间。
     tag_decoder::sptr
     tag_decoder::make(int sample_rate)
     {
@@ -47,6 +55,11 @@ namespace gr {
     /*
      * The private constructor
      */
+    // 构造函数，tag_decoder_impl : public tag_decoder
+    // tag_decoder : virtual public gr::block;  virtual public 是解决多重继承中的一些问题，所以暂时并无需理会。
+    // 在 tag_decoder_impl 中，直接对它的父类的父类 gr::block 进行了相应的初始化。
+    // gr::block 是 gnuradio 的一个模块，具体的源代码放在浏览器之中，
+    // class GR_RUNTIME_API block : public basic_block // 看起来是什么所谓运行时接口，继承了 basic_block
     tag_decoder_impl::tag_decoder_impl(int sample_rate, std::vector<int> output_sizes)
       : gr::block("tag_decoder",
               gr::io_signature::make(1, 1, sizeof(gr_complex)),

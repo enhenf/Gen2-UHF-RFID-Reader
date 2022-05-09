@@ -82,7 +82,8 @@ class reader_top_block(gr.top_block):
 
     if (DEBUG == False) : # Real Time Execution
 
-      # USRP blocks
+      # USRP blocks 
+      # 配置 源与信号入口？
       self.u_source()
       self.u_sink()
 
