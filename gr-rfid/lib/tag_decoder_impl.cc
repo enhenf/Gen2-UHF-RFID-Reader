@@ -206,6 +206,7 @@ namespace gr {
     }
 
 
+    
     int
     tag_decoder_impl::general_work (int noutput_items,
                        gr_vector_int &ninput_items,
@@ -213,8 +214,12 @@ namespace gr {
                        gr_vector_void_star &output_items)
     {
 
-
+      // typedef std::vector<const void*> gr_vector_const_void_star
+      // 一个指针数组。显然把指针强制转换为 gr_complex 的指针，所指类型不可变。
       const gr_complex *in = (const  gr_complex *) input_items[0];
+
+      // typedef std::vector<void*> gr_vector_void_star
+      // 也是指针，指针所指变量是可变的。
       float *out = (float *) output_items[0];
       gr_complex *out_2 = (gr_complex *) output_items[1]; // for debugging
       
@@ -222,6 +227,11 @@ namespace gr {
       int written = 0, consumed = 0;
       int RN16_index , EPC_index;
 
+      // RN16 与 EPC 都是 rfid tag 解码过程的一部分。
+      // reader 先向 tag 发送 select 信息。
+      // tag 返回一个 RN16 信息
+      // reader 返回一个 ACK，其中包含 RN16 信息。
+      // tag 返回指针的 EPC 信息。
       std::vector<float> RN16_samples_real;
       std::vector<float> EPC_samples_real;
 
@@ -235,6 +245,7 @@ namespace gr {
       // Processing only after n_samples_to_ungate are available and we need to decode an RN16
       if (reader_state->decoder_status == DECODER_DECODE_RN16 && ninput_items[0] >= reader_state->n_samples_to_ungate)
       {
+        // 输入的应该是 gr_complex 的指针数组的首地址，以及该数组的长度。
         RN16_index = tag_sync(in,ninput_items[0]);
 
         /*
