@@ -246,8 +246,13 @@ namespace gr {
       if (reader_state->decoder_status == DECODER_DECODE_RN16 && ninput_items[0] >= reader_state->n_samples_to_ungate)
       {
         // 输入的应该是 gr_complex 的指针数组的首地址，以及该数组的长度。
+        
+        
         RN16_index = tag_sync(in,ninput_items[0]);
 
+        // 去除注释之后，据说能导出 I/Q sample 
+        // 但是为什么说是 RN16 的 sample？
+        // 但有所要comment
         /*
         for (int j = 0; j < ninput_items[0]; j ++ )
         {
@@ -264,14 +269,17 @@ namespace gr {
           int k = round(j);
           RN16_samples_complex.push_back(in[k]);
 
-          //out_2[written_sync] = in[j];
-           //written_sync ++;
+          // 根据要求注释了 3 行出来。
+          // 据说能够得到 RN16 的复数数据？
+          // 现在把变量编程 k
+          out_2[written_sync] = in[k];
+          written_sync ++;
 
           if (number_of_half_bits == 2*(RN16_BITS-1))
           {
             //out_2[written_sync] = h_est;
              //written_sync ++;  
-            //produce(1,written_sync);        
+            produce(1,written_sync);        
             break;
           }
         }    
