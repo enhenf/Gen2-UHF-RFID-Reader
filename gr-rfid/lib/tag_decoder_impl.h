@@ -42,6 +42,7 @@ namespace rfid {
       gr_complex h_est;
       char * char_bits;
 
+      // 这四个函数都是被 general_work 调用的
       std::vector<float> tag_detection_EPC(std::vector<gr_complex> &EPC_samples_complex, int index);
       std::vector<float> tag_detection_RN16(std::vector<gr_complex> &RN16_samples_complex);      
       int tag_sync(const gr_complex * in, int size);
@@ -52,6 +53,7 @@ namespace rfid {
       tag_decoder_impl(int sample_rate, std::vector<int> output_sizes);
       ~tag_decoder_impl();
 
+      // 很短的函数，没有被 general_work 调用，不知道干什么。
       void forecast (int noutput_items, gr_vector_int &ninput_items_required);
 
       int general_work(int noutput_items,
