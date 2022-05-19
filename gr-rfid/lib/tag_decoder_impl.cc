@@ -67,9 +67,10 @@ namespace gr {
               s_rate(sample_rate)
     {
 
-
+      // maybe 是存储循环冗余校验码的
       char_bits = (char *) malloc( sizeof(char) * 128);
 
+      // 根据 blog，这是每一位数据的采样数。
       n_samples_TAG_BIT = TAG_BIT_D * s_rate / pow(10,6);      
       GR_LOG_INFO(d_logger, "Number of samples of Tag bit : "<< n_samples_TAG_BIT);
     }
@@ -82,12 +83,19 @@ namespace gr {
 
     }
 
+
+    
     void
     tag_decoder_impl::forecast (int noutput_items, gr_vector_int &ninput_items_required)
     {
         ninput_items_required[0] = noutput_items;
     }
 
+    // tag_decoder函数通过输入数据与已知前导码的相关性计算进行同步，
+    // 得到解码开始的索引数。因存在相位偏移，开始的索引位置需加上半个比特采样数。
+    // 首先这个 size 根本没有用到！！
+    // 其次 tag_sync 只能计算 RN 16 的位置，但是似乎根本没办法计算 EPC 的位置，
+    // 从 general_work 的调用来看， size 对应的是 RN16 / EPC 数据的长度，但是显然不对劲啊！
     int tag_decoder_impl::tag_sync(const gr_complex * in , int size)
     {
       int max_index = 0;
@@ -100,8 +108,10 @@ namespace gr {
         corr2 = gr_complex(0,0);
         corr = 0;
         // sync after matched filter (equivalent)
+        // TAG_PREAMBLE_BITS 是前导码的位数，为什么要乘 2 倍？因为这里确实是 12 位前导码。
         for (int j = 0; j < 2 * TAG_PREAMBLE_BITS; j ++)
         {
+          // 关于对于某一位的采样应该是有 n_samples_tag_bit 位，这个 / 2 是取一个中间值？
           corr2 = corr2 + in[ (int) (i+j*n_samples_TAG_BIT/2) ] * gr_complex(TAG_PREAMBLE[j],0);
         }
         corr = std::norm(corr2);
@@ -113,8 +123,9 @@ namespace gr {
       }  
 
        // Preamble ({1,1,-1,1,-1,-1,1,-1,-1,-1,1,1} 1 2 4 7 11 12)) 
+      // 这个东西不知道是什么，后续会用到。
       h_est = (in[max_index] + in[ (int) (max_index + n_samples_TAG_BIT/2) ] + in[ (int) (max_index + 3*n_samples_TAG_BIT/2) ] + in[ (int) (max_index + 6*n_samples_TAG_BIT/2)] + in[(int) (max_index + 10*n_samples_TAG_BIT/2) ] + in[ (int) (max_index + 11*n_samples_TAG_BIT/2)])/std::complex<float>(6,0);  
-
+      
 
       // Shifted received waveform by n_samples_TAG_BIT/2
       max_index = max_index + TAG_PREAMBLE_BITS * n_samples_TAG_BIT + n_samples_TAG_BIT/2; 
@@ -131,6 +142,9 @@ namespace gr {
       float result;
       int prev = 1,index_T=0;
       
+      // 这里的 size 为什么要 /2?
+      // result 为什么要这么计算？
+      // 这里的解码过程是因为是差分编码吗？
       for (int j = 0; j < RN16_samples_complex.size()/2 ; j ++ )
       {
         result = std::real( (RN16_samples_complex[2*j] - RN16_samples_complex[2*j+1])*std::conj(h_est)); 
@@ -175,12 +189,16 @@ namespace gr {
         }
 
       }
+      // index_T , T, energe 的目的都是为了 T_global 这个 类私有变量服务，
+      // 但在本文件中没有看到 T_global 被使用
+      // 不对， T 在计算 result 的时候使用。
       int index_T = std::distance(energy.begin(), std::max_element(energy.begin(), energy.end()));
       float T =  min_val + index_T*(max_val-min_val)/(number_steps-1);
 
       // T estimated
       T_global = T;
-  
+      // 与解码RN16不同的是，没有进行相邻两个采样点进行差分，而是相隔T个采样点进行差分计算，具体方法有待研究。
+      // index 应该是具体的索引信息。就是 EPC 数据从哪一位开始出现的。
       for (int j = 0; j < 128 ; j ++ )
       {
         result = std::real((EPC_samples_complex[ (int) (j*(2*T) + index) ] - EPC_samples_complex[ (int) (j*2*T + T + index) ])*std::conj(h_est) ); 
@@ -359,6 +377,7 @@ namespace gr {
           if(check_crc(char_bits,128) == 1)
           {
 
+            // 这个判断 slot 是否达到最大值的判断应该是不用管的。
             if(reader_state->reader_stats.cur_slot_number > reader_state->reader_stats.max_slot_number)
             {
               reader_state->reader_stats.cur_slot_number = 1;
@@ -373,7 +392,8 @@ namespace gr {
             else
             {
               reader_state->gen2_logic_status = SEND_QUERY_REP;
-            }
+            }// 判断 slot 是否达到最大值。
+
 
             reader_state->reader_stats.n_epc_correct+=1;
 
@@ -394,7 +414,7 @@ namespace gr {
             {
               reader_state->reader_stats.tag_reads[result]=1;
             }
-          }
+          }//if check_crc true;
           else
           {     
 
@@ -416,7 +436,7 @@ namespace gr {
 
             
             GR_LOG_INFO(d_debug_logger, "EPC FAIL TO DECODE");  
-          }
+          }// if check_crc false;
         }
         else
         {
