@@ -292,11 +292,14 @@ namespace gr {
           // 现在把变量编程 k
           out_2[written_sync] = in[k];
           written_sync ++;
-
+          // 实际上在RN16_samples_complex 中并不是 16 位数据，而是 32 个复数数据，
+          // 之后，作者用一个 差分的方法来求 bit 数据。
+          // 那从 tag_detection_RN16 中看，很有可能使用的是 0 1 编码，而且可能是差分编码。
           if (number_of_half_bits == 2*(RN16_BITS-1))
           {
             //out_2[written_sync] = h_est;
              //written_sync ++;  
+            // 不是很明白这个 produce 的含义。
             produce(1,written_sync);        
             break;
           }
@@ -360,10 +363,11 @@ namespace gr {
         }
         produce(1,written_sync);
         */
-
+        // 这里不对劲，在 RN 16 中，是先用复数位验证后 decoder，
+        // 不过似乎也可以理解，因为这里 EPC_samples_complex 中还是有前导码的，所以不太好直接如此验证。
         EPC_bits   = tag_detection_EPC(EPC_samples_complex,EPC_index);
 
-        
+        // 从 EPC_index 处得到的 EPC_BITS - 1 == 128 位，前 16 位是校验码，之后 16 位是协议控制位，之后 96 位是 EPC 标签位。
         if (EPC_bits.size() == EPC_BITS - 1)
         {
           // float to char -> use Buettner's function
@@ -397,6 +401,23 @@ namespace gr {
 
             reader_state->reader_stats.n_epc_correct+=1;
 
+
+            // 作者说这里只提取了 EPC tag 中的  8 位
+            /*
+            // 这是另一个人添加的部分。
+            这里似乎也写错了，把协议控制位给搞错了。 j 应该从 4 开始。
+            std::cout << "+ "; 
+            unsigned int id0; 
+            for(int j = 2 ; j < 14 ; ++j) 
+            { 
+              id0= 0; 
+              for(int i = 0 ; i < 8 ; ++i) id0 += std::pow(2,7-i) * EPC_bits[8 * j + i] ; 
+              std::cout << std::hex << std::setw(2) << std::setfill('0') << id0; 
+              if(j < 13) std::cout << "-"; 
+            } 
+            std::cout << std::dec << " +" << std::flush;
+            
+            */
             int result = 0;
             for(int i = 0 ; i < 8 ; ++i)
             {
